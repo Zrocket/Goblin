@@ -116,7 +116,6 @@ class Loader:
 
     def decode_value(self, typeid, buf):
         go_type = self.types.get(typeid)
-        print("GO_TYPE: ", go_type)
         if go_type is None:
             raise NotImplementedError("cannot decode %s" % typeid)
         return go_type.decode(buf)

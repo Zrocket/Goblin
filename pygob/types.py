@@ -368,25 +368,13 @@ class GoStruct(GoType):
         values = {}
         field_id = -1
         while True:
-            print()
-            print()
-            print("OLD_BUF: ", buf)
             delta, buf = GoUint.decode(buf)
-            print("FIELDS: ", self._fields)
-            print("BUF: ", buf)
-            print("DELTA: ", delta)
             if delta == 0:
                 break
             field_id += delta
-            print("FIELD_ID: ", field_id)
             name, typeid = self._fields[field_id]
-            print("NAME: ", name)
-            print("TYPEID: ", typeid)
             value, buf = self._loader.types[typeid].decode(buf)
-            print("VALUE: ", value)
-            print("NEW_BUF: ", buf)
             values[name] = value
-            print("VALUE_ARRAY: ", values)
         return self.zero._replace(**values), buf
 
     def __repr__(self):
@@ -410,7 +398,6 @@ class GoWireType(GoStruct):
     def decode(self, buf):
         """Decode data from buf and return a GoType."""
         wire_type, buf = super().decode(buf)
-        print("WIRE_TYPE: ", wire_type)
 
         if wire_type.ArrayT != self._loader.types[ARRAY_TYPE].zero:
             typeid = wire_type.ArrayT.CommonType.Id
@@ -574,17 +561,18 @@ class GoGobEncoder(GoType):
     """
 
     @property
-    def zero(cls):
-        values = [self._loader.types[t].zero for (n, t) in self._fields]
-        return self._class._make(values)
+    def zero(self):
+        return {}
+        #values = [self._loader.types[t].zero for (n, t) in self._fields]
+        #return self._class._make(values)
 
     def __init__(self, typeid, loader):
         self.typeid = typeid
         self._loader = loader
 
     def decode(self, buf):
-        breakpoint()
-        pass
+        count, buf = GoUint.decode(buf)
+        return buf[:count], buf[count:]
 
 
 class GoBinaryMarshaler(GoType):
@@ -592,17 +580,18 @@ class GoBinaryMarshaler(GoType):
     """
 
     @property
-    def zero(cls):
-        values = [self._loader.types[t].zero for (n, t) in self._fields]
-        return self._class._make(values)
+    def zero(self):
+        return {}
+        #values = [self._loader.types[t].zero for (n, t) in self._fields]
+        #return self._class._make(values)
 
     def __init__(self, typeid, loader):
         self.typeid = typeid
         self._loader = loader
 
     def decode(self, buf):
-        breakpoint()
-        pass
+        count, buf = GoUint.decode(buf)
+        return buf[:count], buf[count:]
 
 
 class GoTextMarshaler(GoType):
@@ -610,14 +599,15 @@ class GoTextMarshaler(GoType):
     """
 
     @property
-    def zero(cls):
-        values = [self._loader.types[t].zero for (n, t) in self._fields]
-        return self._class._make(values)
+    def zero(self):
+        return {}
+#        values = [self._loader.types[t].zero for (n, t) in self._fields]
+#        return self._class._make(values)
 
     def __init__(self, typeid, loader):
         self.typeid = typeid
         self._loader = loader
 
     def decode(self, buf):
-        breakpoint()
-        pass
+        count, buf = GoUint.decode(buf)
+        return buf[:count], buf[count:]
