@@ -28,6 +28,10 @@ FIELD_TYPE = 21
 FIELD_TYPE_SLICE = 22
 MAP_TYPE = 23
 
+GOB_ENCODER_TYPE = -1
+BINARY_MARSHALER_TYPE = -2
+TEXT_MARSHALER_TYPE = -3
+
 
 class classproperty(object):
     def __init__(self, fget):
@@ -357,20 +361,32 @@ class GoStruct(GoType):
         self._name = name
         self._loader = loader
         self._fields = fields
-        self._class = collections.namedtuple(name, [n for (n, t) in fields])
+        self._class = collections.namedtuple(name, [n for (n, t) in fields], rename=True)
 
     def decode(self, buf):
         """Decode data from buf and return a namedtuple."""
         values = {}
         field_id = -1
         while True:
+            print()
+            print()
+            print("OLD_BUF: ", buf)
             delta, buf = GoUint.decode(buf)
+            print("FIELDS: ", self._fields)
+            print("BUF: ", buf)
+            print("DELTA: ", delta)
             if delta == 0:
                 break
             field_id += delta
+            print("FIELD_ID: ", field_id)
             name, typeid = self._fields[field_id]
+            print("NAME: ", name)
+            print("TYPEID: ", typeid)
             value, buf = self._loader.types[typeid].decode(buf)
+            print("VALUE: ", value)
+            print("NEW_BUF: ", buf)
             values[name] = value
+            print("VALUE_ARRAY: ", values)
         return self.zero._replace(**values), buf
 
     def __repr__(self):
@@ -394,6 +410,7 @@ class GoWireType(GoStruct):
     def decode(self, buf):
         """Decode data from buf and return a GoType."""
         wire_type, buf = super().decode(buf)
+        print("WIRE_TYPE: ", wire_type)
 
         if wire_type.ArrayT != self._loader.types[ARRAY_TYPE].zero:
             typeid = wire_type.ArrayT.CommonType.Id
@@ -421,6 +438,21 @@ class GoWireType(GoStruct):
             key_typeid = wire_type.MapT.Key
             elem_typeid = wire_type.MapT.Elem
             return GoMap(typeid, self._loader, key_typeid, elem_typeid), buf
+
+        if wire_type.GobEncoderT != self._loader.types[GOB_ENCODER_TYPE].zero:
+            typeid = wire_type.GobEncoderT.CommonType.Id
+            name = wire_type.GobEncoderT.CommonType.Name.decode('utf-8')
+            return GoGobEncoder(typeid, self._loader), buf
+
+        if wire_type.BinaryMarshalerT != self._loader.types[BINARY_MARSHALER_TYPE].zero:
+            typeid = wire_type.BinaryMarshalerT.GobEncoderT.CommonType.Id
+            name = wire_type.BinaryMarshalerT.GobEncoderT.CommonType.Name.decode('utf-8')
+            return GoBinaryMarshaler(typeid, self._loader), buf
+
+        if wire_type.TextMarshalerT != self._loader.types[TEXT_MARSHALER_TYPE].zero:
+            typeid = wire_type.TextMarshalerT.GobEncoderT.CommonType.Id
+            name = wire_type.TextMarshalerT.GobEncoderT.CommonType.Name.decode('utf-8')
+            return GoTextMarshaler(typeid, self._loader), buf
 
         raise NotImplementedError("cannot handle %s" % wire_type)
 
@@ -535,3 +567,57 @@ class GoMap(GoType):
             value, buf = self._loader.decode_value(self._elem_typeid, buf)
             result[key] = value
         return result, buf
+
+
+class GoGobEncoder(GoType):
+    """A Go Gob Encoder.
+    """
+
+    @property
+    def zero(cls):
+        values = [self._loader.types[t].zero for (n, t) in self._fields]
+        return self._class._make(values)
+
+    def __init__(self, typeid, loader):
+        self.typeid = typeid
+        self._loader = loader
+
+    def decode(self, buf):
+        breakpoint()
+        pass
+
+
+class GoBinaryMarshaler(GoType):
+    """A Go Binary Marshaler
+    """
+
+    @property
+    def zero(cls):
+        values = [self._loader.types[t].zero for (n, t) in self._fields]
+        return self._class._make(values)
+
+    def __init__(self, typeid, loader):
+        self.typeid = typeid
+        self._loader = loader
+
+    def decode(self, buf):
+        breakpoint()
+        pass
+
+
+class GoTextMarshaler(GoType):
+    """A Go Text Marshaler
+    """
+
+    @property
+    def zero(cls):
+        values = [self._loader.types[t].zero for (n, t) in self._fields]
+        return self._class._make(values)
+
+    def __init__(self, typeid, loader):
+        self.typeid = typeid
+        self._loader = loader
+
+    def decode(self, buf):
+        breakpoint()
+        pass

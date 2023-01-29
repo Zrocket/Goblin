@@ -1,6 +1,7 @@
 from .types import (BOOL, INT, UINT, FLOAT, BYTE_SLICE, STRING, COMPLEX,
                     WIRE_TYPE, ARRAY_TYPE, COMMON_TYPE, SLICE_TYPE,
-                    STRUCT_TYPE, FIELD_TYPE, FIELD_TYPE_SLICE, MAP_TYPE)
+                    STRUCT_TYPE, FIELD_TYPE, FIELD_TYPE_SLICE, MAP_TYPE,
+                    GOB_ENCODER_TYPE, BINARY_MARSHALER_TYPE, TEXT_MARSHALER_TYPE)
 from .types import (GoBool, GoUint, GoInt, GoFloat, GoByteSlice, GoString,
                     GoComplex, GoStruct, GoWireType, GoSlice)
 
@@ -40,6 +41,18 @@ class Loader:
             ('SliceT', SLICE_TYPE),
             ('StructT', STRUCT_TYPE),
             ('MapT', MAP_TYPE),
+            ('GobEncoderT', GOB_ENCODER_TYPE),
+            ('BinaryMarshalerT', BINARY_MARSHALER_TYPE),
+            ('TextMarshalerT', TEXT_MARSHALER_TYPE),
+        ])
+        gob_encoder_type = GoStruct(GOB_ENCODER_TYPE, 'GobEncoderType', self, [
+            ('CommonType', COMMON_TYPE),
+        ])
+        binary_marshaler_type = GoStruct(BINARY_MARSHALER_TYPE, 'BinaryMarshalerType', self, [
+            ('CommonType', COMMON_TYPE),
+        ])
+        text_marshaler_type = GoStruct(TEXT_MARSHALER_TYPE, 'TextMarshalerType', self, [
+            ('CommonType', COMMON_TYPE),
         ])
 
         # We can now register basic and compound types.
@@ -59,6 +72,9 @@ class Loader:
             FIELD_TYPE: field_type,
             FIELD_TYPE_SLICE: field_type_slice,
             MAP_TYPE: map_type,
+            GOB_ENCODER_TYPE: gob_encoder_type,
+            BINARY_MARSHALER_TYPE: binary_marshaler_type,
+            TEXT_MARSHALER_TYPE: text_marshaler_type,
         }
 
     def load(self, buf):
@@ -100,6 +116,7 @@ class Loader:
 
     def decode_value(self, typeid, buf):
         go_type = self.types.get(typeid)
+        print("GO_TYPE: ", go_type)
         if go_type is None:
             raise NotImplementedError("cannot decode %s" % typeid)
         return go_type.decode(buf)
