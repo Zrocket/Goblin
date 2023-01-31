@@ -384,9 +384,11 @@ class GoStruct(GoType):
         assert len(values) == len(self._fields), 'Incorrect number of values to encode'
         for field, value in zip(self._fields, values):
             field_id += 1
-            buf.append(GoUint.encode(field_id))
+            #breakpoint()
+            buf.extend(GoUint.encode(field_id))
             field_type = self._loader.types[field[1]]
-            bif.append(field_type.encode(value))
+            buf.extend(field_type.encode(value))
+        return buf
 
     def __repr__(self):
         """GoStruct representation.
