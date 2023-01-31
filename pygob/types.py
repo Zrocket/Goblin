@@ -27,7 +27,8 @@ STRUCT_TYPE = 20
 FIELD_TYPE = 21
 FIELD_TYPE_SLICE = 22
 MAP_TYPE = 23
-
+# These don't have a defined typeid
+# so these ids are for consistancy
 GOB_ENCODER_TYPE = -1
 BINARY_MARSHALER_TYPE = -2
 TEXT_MARSHALER_TYPE = -3
@@ -377,6 +378,16 @@ class GoStruct(GoType):
             values[name] = value
         return self.zero._replace(**values), buf
 
+    def encode(self, values):
+        field_id = -1
+        buf = bytearray()
+        assert len(values) == len(self._fields), 'Incorrect number of values to encode'
+        for field, value in zip(self._fields, values):
+            field_id += 1
+            buf.append(GoUint.encode(field_id))
+            field_type = self._loader.types[field[1]]
+            bif.append(field_type.encode(value))
+
     def __repr__(self):
         """GoStruct representation.
 
@@ -483,6 +494,9 @@ class GoArray(GoType):
             result.append(value)
         return tuple(result), buf
 
+    def encode(self, value):
+        pass
+
 
 class GoSlice(GoType):
     """A Go slice.
@@ -562,9 +576,7 @@ class GoGobEncoder(GoType):
 
     @property
     def zero(self):
-        return {}
-        #values = [self._loader.types[t].zero for (n, t) in self._fields]
-        #return self._class._make(values)
+        return b''
 
     def __init__(self, typeid, loader):
         self.typeid = typeid
@@ -581,9 +593,7 @@ class GoBinaryMarshaler(GoType):
 
     @property
     def zero(self):
-        return {}
-        #values = [self._loader.types[t].zero for (n, t) in self._fields]
-        #return self._class._make(values)
+        return b''
 
     def __init__(self, typeid, loader):
         self.typeid = typeid
@@ -600,9 +610,7 @@ class GoTextMarshaler(GoType):
 
     @property
     def zero(self):
-        return {}
-#        values = [self._loader.types[t].zero for (n, t) in self._fields]
-#        return self._class._make(values)
+        return b''
 
     def __init__(self, typeid, loader):
         self.typeid = typeid

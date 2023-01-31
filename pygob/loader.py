@@ -4,6 +4,7 @@ from .types import (BOOL, INT, UINT, FLOAT, BYTE_SLICE, STRING, COMPLEX,
                     GOB_ENCODER_TYPE, BINARY_MARSHALER_TYPE, TEXT_MARSHALER_TYPE)
 from .types import (GoBool, GoUint, GoInt, GoFloat, GoByteSlice, GoString,
                     GoComplex, GoStruct, GoWireType, GoSlice)
+from .encoder import Encoder
 
 
 class Loader:
@@ -119,3 +120,27 @@ class Loader:
         if go_type is None:
             raise NotImplementedError("cannot decode %s" % typeid)
         return go_type.decode(buf)
+
+    def get_encoder(self, buf):
+        while True:
+            segment, buf = self._read_segment(buf)
+            typeid, segment = GoInt.decode(segment)
+            if typeid > 0:
+                break  # Found a value.
+
+            # Decode wire type and register type for later.
+            custom_type, segment = self.decode_value(WIRE_TYPE, segment)
+            self.types[-typeid] = custom_type
+            assert segment == b'', ('trailing data in segment: %s' %
+                                    list(segment))
+
+        # Top-level singletons are sent with an extra zero byte which
+        # serves as a kind of field delta.
+        go_type = self.types.get(typeid)
+        if go_type is not None and not isinstance(go_type, GoStruct):
+            assert segment[0] == 0, 'illegal delta for singleton: %s' % buf[0]
+            segment = segment[1:]
+        value, segment = self.decode_value(typeid, segment)
+        assert segment == b'', 'trailing data in segment: %s' % list(segment)
+        return value, buf
+        return Encoder(self.types)

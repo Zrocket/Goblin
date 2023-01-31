@@ -5,7 +5,7 @@ from .types import (GoBool, GoInt, GoUint, GoFloat, GoStruct, GoByteSlice,
 
 
 class Dumper:
-    def __init__(self):
+    def __init__(self, types=None):
         self.types = {
             bool: GoBool,
             int: GoInt,
