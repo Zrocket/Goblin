@@ -78,6 +78,17 @@ class Loader:
             TEXT_MARSHALER_TYPE: text_marshaler_type,
         }
 
+        self.python_types = {
+            bool: GoBool,
+            int: GoInt,
+            float: GoFloat,
+            bytes: GoByteSlice,
+            str: GoString,
+            complex: GoComplex,
+        }
+
+        self.prelude = bytearray()
+
     def load(self, buf):
         value, buf = self._load(buf)
         return value
