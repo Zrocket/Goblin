@@ -616,7 +616,7 @@ class GoGobEncoder(GoType):
 
     def encode(self, value):
         buf = bytearray()
-        buf.extended(GoUint.encode(len(value + 1)))
+        buf.extend(GoUint.encode(len(value)))
         buf.extend(value)
         return buf
 
@@ -639,7 +639,7 @@ class GoBinaryMarshaler(GoType):
 
     def encode(self, value):
         buf = bytearray()
-        buf.extended(GoUint.encode(len(value + 1)))
+        buf.extend(GoUint.encode(len(value)))
         buf.extend(value)
         return buf
 
@@ -662,6 +662,6 @@ class GoTextMarshaler(GoType):
 
     def encode(self, value):
         buf = bytearray()
-        buf.extended(GoUint.encode(len(value + 1)))
+        buf.extend(GoUint.encode(len(value)))
         buf.extend(value)
         return buf
