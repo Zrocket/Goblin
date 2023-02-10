@@ -196,3 +196,26 @@ def test_person_struct():
     Address = collections.namedtuple('Address', ['Street', 'HouseNumber'])
     assert pygob.load(bytes(data)) == Person(b'Alice', 35,
                                              Address(b'Main St', 17))
+
+
+def test_access_zero_of_a_recursive_struct():
+    from pygob import Loader
+    from pygob.types import GoStruct, INT
+    node = GoStruct(150, 'Node', Loader(), [
+        ('Left', 150),
+        ('Right', 150),
+        ('Value', INT),
+    ])
+    Node = collections.namedtuple('Node', ['Left', 'Right', 'Value'])
+    assert node.zero == Node(None, None, 0)
+
+
+def test_a_recursive_struct():
+    data = [
+        49, 255, 129, 3, 1, 1, 4, 78, 111, 100, 101, 1, 255, 130, 0, 1, 3, 1,
+        5, 86, 97, 108, 117, 101, 1, 4, 0, 1, 4, 76, 101, 102, 116, 1, 255,
+        130, 0, 1, 5, 82, 105, 103, 104, 116, 1, 255, 130, 0, 0, 0, 9, 255,
+        130, 1, 2, 1, 1, 4, 0, 0
+    ]
+    Node = collections.namedtuple('Node', ['Value', 'Left', 'Right'])
+    assert pygob.load(bytes(data)) == Node(1, Node(2, None, None), None)

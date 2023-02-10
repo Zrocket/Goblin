@@ -1,5 +1,8 @@
 *~
 
+*.pyc
+venv
+.vscode
 pygob.egg-info/
 .cache/
 __pycache__/

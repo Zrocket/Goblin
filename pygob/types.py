@@ -342,7 +342,14 @@ class GoStruct(GoType):
 
     @property
     def zero(self):
-        values = [self._loader.types[t].zero for (n, t) in self._fields]
+        values = []
+        for _, t in self._fields:
+            type_ = self._loader.types[t]
+            if type_ == self:
+                # avoid infinite recursion with recursive types
+                values.append(None)
+            else:
+                values.append(type_.zero)
         return self._class._make(values)
 
     def __init__(self, typeid, name, loader, fields):
@@ -361,6 +368,9 @@ class GoStruct(GoType):
         """
         self.typeid = typeid
         self._name = name
+        # also needed for recursive types
+        if hasattr(loader, "types") and typeid not in loader.types:
+            loader.types[typeid] = self
         self._loader = loader
         self._fields = fields
         self._class = collections.namedtuple(name, [n for (n, t) in fields], rename=True)
